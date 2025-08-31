@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&lt; Ai 價賀 ! &gt; 台灣多平台電商即時比價</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .skeleton-loader {
+            background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+    <!-- Chosen Palette: Serene Tech (based on spec: Primary #7d9da8, Accent #c6b9cb, #cab6b7, Base #c4d3d8) -->
+    <!-- Application Structure Plan: A single-page application (SPA) structure is implemented to mirror the spec's user flow. The main view contains a dynamic stats bar, a central search module, trending keywords, and a results area. Modals are used for platform selection and help to keep the UI clean. JS-driven view switching simulates navigation to a user account page and a protected admin dashboard, providing a seamless experience without page reloads. This structure was chosen to create a live, interactive prototype that directly visualizes the final application's components and core interactions as defined in the source report. -->
+    <!-- Visualization & Content Choices: 
+        - Dynamic Stats Bar: Goal: Inform/Trust. Method: HTML/CSS with JS number animations. Interaction: Auto-updates. Justification: Provides immediate feedback on site activity.
+        - Search Results: Goal: Compare. Method: Grouped flexbox cards with Tailwind. Interaction: Sorting, hover effects. Justification: Visually implements the core "similarity grouping" logic from the spec.
+        - Admin Stats: Goal: Analyze. Method: Bar Chart (Chart.js/Canvas). Interaction: Tooltips. Justification: Provides a clear, visual representation of site usage trends for the admin, as required by the spec.
+        - User/Admin Panels: Goal: Organize Tasks. Method: JS-based view toggling. Interaction: Button clicks switch content. Justification: Efficiently simulates a multi-page app within a single file.
+        - Modals: Goal: Conserve Space. Method: Styled divs with JS visibility toggle. Interaction: Open/close buttons. Justification: Presents secondary information without cluttering the main interface.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="text-[#333333]">
+
+    <div id="app-container">
+
+        <!-- Main Application View -->
+        <div id="main-view">
+            <header class="bg-white shadow-sm sticky top-0 z-20">
+                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-[#7d9da8]">&lt; Ai 價賀 ! &gt;</h1>
+                    <div>
+                        <button id="user-account-btn" class="text-gray-600 hover:text-[#7d9da8] mr-4">我的帳號</button>
+                        <button id="help-btn" class="text-gray-600 hover:text-[#7d9da8]">使用說明</button>
+                    </div>
+                </nav>
+            </header>
+
+            <main class="container mx-auto p-4 md:p-6">
+                <!-- Dynamic Stats Bar -->
+                <section id="stats-bar" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-center">
+                    <div class="bg-[#c4d3d8] bg-opacity-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-700">今日總搜尋</p>
+                        <p id="today-searches" class="text-2xl font-bold text-[#7d9da8]">0</p>
+                    </div>
+                    <div class="bg-[#c4d3d8] bg-opacity-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-700">目前在線</p>
+                        <p id="online-users" class="text-2xl font-bold text-[#7d9da8]">0</p>
+                    </div>
+                    <div class="bg-[#c4d3d8] bg-opacity-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-700">累計總搜尋</p>
+                        <p id="total-searches" class="text-2xl font-bold text-[#7d9da8]">0</p>
+                    </div>
+                </section>
+
+                <!-- Search Core -->
+                <section class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input id="search-input" type="text" placeholder="輸入商品名稱..." class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7d9da8] focus:outline-none">
+                        <button id="search-btn" class="bg-[#7d9da8] text-white px-8 py-3 rounded-md font-semibold hover:bg-opacity-90 transition-colors">搜尋</button>
+                    </div>
+                    <div class="mt-4 flex flex-wrap items-center gap-4">
+                        <button id="platform-select-btn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-full">選擇平台</button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm text-gray-500">熱門關鍵字:</span>
+                            <button class="keyword-tag bg-[#c6b9cb] bg-opacity-60 text-sm text-gray-800 px-3 py-1 rounded-full hover:bg-opacity-100">iPhone 16</button>
+                            <button class="keyword-tag bg-[#cab6b7] bg-opacity-60 text-sm text-gray-800 px-3 py-1 rounded-full hover:bg-opacity-100">RTX 4090</button>
+                            <button class="keyword-tag bg-[#c6b9cb] bg-opacity-60 text-sm text-gray-800 px-3 py-1 rounded-full hover:bg-opacity-100">衛生紙</button>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Trending & Results -->
+                <section>
+                    <!-- Trending Searches -->
+                    <div id="trending-searches" class="mb-6">
+                        <div class="flex border-b">
+                            <button data-tab="daily" class="trending-tab py-2 px-4 text-[#7d9da8] border-b-2 border-[#7d9da8] font-semibold">本日熱搜</button>
+                            <button data-tab="weekly" class="trending-tab py-2 px-4 text-gray-500">本週熱搜</button>
+                        </div>
+                        <div id="trending-content" class="p-4 bg-white rounded-b-lg">
+                            <ol class="list-decimal list-inside space-y-2">
+                                <!-- JS will populate this -->
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div id="results-area">
+                        <div id="sort-options" class="hidden justify-end items-center mb-4 gap-4">
+                             <p id="update-timestamp" class="text-sm text-gray-500 mr-auto"></p>
+                             <p id="precision-display" class="text-sm font-semibold text-[#7d9da8] p-2 bg-[#c4d3d8] rounded-md"></p>
+                             <span class="text-sm">排序:</span>
+                             <button data-sort="asc" class="sort-btn text-[#7d9da8] font-bold">價格由低到高</button>
+                             <button data-sort="desc" class="sort-btn text-gray-500">價格由高到低</button>
+                        </div>
+                        <div id="results-container" class="space-y-6">
+                            <!-- Placeholder, Skeleton, or Results go here -->
+                        </div>
+                    </div>
+                </section>
+            </main>
+            
+            <footer class="bg-[#c4d3d8] bg-opacity-40 mt-10">
+                <div class="container mx-auto px-4 py-4 text-center text-sm text-gray-600">
+                    <p>&copy; 2025 &lt; Ai 價賀 ! &gt;. All Rights Reserved.</p>
+                    <a href="#" id="disclaimer-btn" class="underline hover:text-[#7d9da8]">免責聲明</a>
+                </div>
+            </footer>
+        </div>
+
+        <!-- User Account View -->
+        <div id="user-view" class="hidden">
+             <header class="bg-white shadow-sm">
+                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-[#7d9da8]">我的帳號</h1>
+                    <button id="back-to-main-btn" class="text-gray-600 hover:text-[#7d9da8]">返回首頁</button>
+                </nav>
+            </header>
+            <main class="container mx-auto p-4 md:p-6">
+                 <div class="max-w-4xl mx-auto">
+                    <h2 class="text-xl font-semibold mb-4">問題回報區</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="font-bold mb-3">提交新問題</h3>
+                            <form id="report-form" class="bg-white p-6 rounded-lg shadow-md space-y-4">
+                                <input id="report-subject" type="text" required placeholder="問題主旨" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#7d9da8] focus:outline-none">
+                                <textarea id="report-content" required placeholder="詳細問題描述..." rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#7d9da8] focus:outline-none"></textarea>
+                                <button type="submit" class="w-full bg-[#7d9da8] text-white py-2 rounded-md hover:bg-opacity-90">提交回報</button>
+                            </form>
+                        </div>
+                        <div>
+                             <h3 class="font-bold mb-3">歷史回報紀錄</h3>
+                             <div id="report-history" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                 <p class="text-gray-500">尚無回報紀錄。</p>
+                             </div>
+                        </div>
+                    </div>
+                 </div>
+            </main>
+        </div>
+
+        <!-- Admin Panel View -->
+        <div id="admin-view" class="hidden">
+             <header class="bg-gray-800 text-white shadow-md">
+                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold">&lt; Ai 價賀 ! &gt; 管理員後台</h1>
+                    <button id="admin-logout-btn" class="text-gray-300 hover:text-white">登出</button>
+                </nav>
+            </header>
+             <main class="container mx-auto p-4 md:p-6">
+                 <div class="flex border-b mb-6">
+                    <button data-admin-tab="stats" class="admin-tab py-2 px-4 text-[#7d9da8] border-b-2 border-[#7d9da8] font-semibold">數據統計</button>
+                    <button data-admin-tab="reports" class="admin-tab py-2 px-4 text-gray-500 relative">
+                        問題回報
+                        <span id="report-notification" class="hidden absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                    </button>
+                 </div>
+
+                 <!-- Admin Stats Content -->
+                 <div id="admin-stats-content">
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <button class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">今日</button>
+                        <button class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">本週</button>
+                        <button class="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">本月</button>
+                        <input type="date" class="p-2 border rounded-md">
+                        <span class="self-center">-</span>
+                        <input type="date" class="p-2 border rounded-md">
+                        <button class="bg-[#7d9da8] text-white px-4 py-2 rounded-md hover:bg-opacity-90">查詢</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <p class="font-semibold">總搜尋次數</p>
+                            <p class="text-3xl font-bold">15,890</p>
+                        </div>
+                         <div class="bg-white p-4 rounded-lg shadow">
+                            <p class="font-semibold">總獨立訪客</p>
+                            <p class="text-3xl font-bold">4,321</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="font-bold mb-4">本週搜尋趨勢</h3>
+                        <div class="chart-container">
+                             <canvas id="admin-chart"></canvas>
+                        </div>
+                    </div>
+                 </div>
+
+                 <!-- Admin Reports Content -->
+                 <div id="admin-reports-content" class="hidden">
+                    <div id="admin-reports-list" class="space-y-4">
+                        <p class="text-gray-500">目前沒有待處理的回報。</p>
+                    </div>
+                 </div>
+
+             </main>
+        </div>
+
+        <!-- Admin Login Modal -->
+        <div id="admin-login-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+                <h2 class="text-xl font-bold mb-4">管理員登入</h2>
+                <form id="admin-login-form">
+                    <input id="admin-secret-key" type="password" placeholder="請輸入管理密鑰" class="w-full p-2 border rounded-md mb-4">
+                    <button type="submit" class="w-full bg-gray-800 text-white py-2 rounded-md">登入</button>
+                    <button type="button" id="admin-login-close" class="w-full mt-2 text-gray-600">取消</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const appState = {
+        currentView: 'main',
+        currentSort: 'asc',
+        currentTrendingTab: 'daily',
+        platforms: {
+            'momo': { name: 'momo購物網', selected: true },
+            'pchome': { name: 'PChome 24h購物', selected: true },
+            'shopee': { name: '蝦皮購物', selected: false },
+            'yahoo': { name: 'Yahoo購物中心', selected: true },
+            'ruten': { name: '露天拍賣', selected: false },
+        },
+        userReports: [],
+        adminReports: [],
+        adminLoggedIn: false,
+    };
+
+    const MOCK_DATA = {
+        dailyTrending: ['iPhone 16', '無線吸塵器', '氣炸鍋', 'PS5 Pro', 'GoPro 13', '筋膜槍', '電競螢幕', '機械鍵盤', '行動電源', '藍牙耳機'],
+        weeklyTrending: ['衛生紙', 'iPhone 16', '貓砂', '咖啡豆', '洗衣精', '顯示卡', 'RTX 4090', '筆記型電腦', '電風扇', '除濕機'],
+        searchResults: (query) => {
+            if (!query) return [];
+            return [
+                {
+                    group_id: 1,
+                    representative_title: `Apple iPhone 16 Pro 256G`,
+                    items: [
+                        { id: 1, platform: 'momo', name: '【Apple 蘋果】iPhone 16 Pro 256G 鈦金屬色(現貨免運)', price: 38900, url: '#', img: 'https://placehold.co/100x100/7d9da8/ffffff?text=i16' },
+                        { id: 2, platform: 'pchome', name: 'Apple iPhone 16 Pro (256G) 智慧型手機', price: 38900, url: '#', img: 'https://placehold.co/100x100/c4d3d8/ffffff?text=i16' },
+                        { id: 3, platform: 'yahoo', name: 'iPhone 16 Pro 256GB - 全新上市', price: 39200, url: '#', img: 'https://placehold.co/100x100/cab6b7/ffffff?text=i16' },
+                    ]
+                },
+                {
+                    group_id: 2,
+                    representative_title: `Apple iPhone 16 128G`,
+                    items: [
+                        { id: 4, platform: 'momo', name: '【Apple 蘋果】iPhone 16 128G 粉色(下殺)', price: 29900, url: '#', img: 'https://placehold.co/100x100/c6b9cb/ffffff?text=i16' },
+                    ]
+                }
+            ];
+        },
+        adminChartData: {
+            labels: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'],
+            datasets: [{
+                label: '搜尋次數',
+                data: [1200, 1900, 3000, 5000, 2300, 3100, 4500],
+                backgroundColor: '#7d9da8',
+                borderColor: '#7d9da8',
+                borderWidth: 1
+            }]
+        }
+    };
+
+    const mainView = document.getElementById('main-view');
+    const userView = document.getElementById('user-view');
+    const adminView = document.getElementById('admin-view');
+    
+    function switchView(viewName) {
+        mainView.classList.add('hidden');
+        userView.classList.add('hidden');
+        adminView.classList.add('hidden');
+        
+        if (viewName === 'main') mainView.classList.remove('hidden');
+        else if (viewName === 'user') userView.classList.remove('hidden');
+        else if (viewName === 'admin') adminView.classList.remove('hidden');
+        
+        appState.currentView = viewName;
+        window.scrollTo(0, 0);
+    }
+    
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            element.innerText = Math.floor(progress * (end - start) + start).toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function initStatsBar() {
+        const todaySearchesEl = document.getElementById('today-searches');
+        const onlineUsersEl = document.getElementById('online-users');
+        const totalSearchesEl = document.getElementById('total-searches');
+        
+        animateValue(todaySearchesEl, 0, 9876, 1500);
+        animateValue(onlineUsersEl, 0, 215, 1500);
+        animateValue(totalSearchesEl, 0, 1234567, 1500);
+
+        setInterval(() => {
+            const currentOnline = parseInt(onlineUsersEl.textContent.replace(/,/g, ''));
+            const newOnline = Math.max(50, currentOnline + Math.floor(Math.random() * 21) - 10);
+            onlineUsersEl.textContent = newOnline.toLocaleString();
+        }, 15000);
+    }
+
+    function renderTrending() {
+        const contentEl = document.getElementById('trending-content').querySelector('ol');
+        const data = appState.currentTrendingTab === 'daily' ? MOCK_DATA.dailyTrending : MOCK_DATA.weeklyTrending;
+        contentEl.innerHTML = data.map(item => 
+            `<li class="cursor-pointer hover:text-[#7d9da8] keyword-tag">${item}</li>`
+        ).join('');
+    }
+
+    function renderResults(query) {
+        const container = document.getElementById('results-container');
+        const sortOptions = document.getElementById('sort-options');
+        const updateTimestamp = document.getElementById('update-timestamp');
+        const precisionDisplay = document.getElementById('precision-display');
+        
+        container.innerHTML = Array(3).fill('').map(() => `
+            <div class="bg-white p-4 rounded-lg shadow-md border border-transparent">
+                <div class="skeleton-loader h-6 w-3/4 mb-4 rounded"></div>
+                <div class="space-y-4">
+                    ${Array(2).fill('').map(() => `
+                        <div class="flex items-center gap-4">
+                            <div class="skeleton-loader w-24 h-24 rounded-md"></div>
+                            <div class="flex-grow space-y-2">
+                                <div class="skeleton-loader h-5 w-full rounded"></div>
+                                <div class="skeleton-loader h-5 w-5/6 rounded"></div>
+                                <div class="skeleton-loader h-8 w-1/3 rounded"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+        sortOptions.classList.add('hidden');
+
+        setTimeout(() => {
+            const results = MOCK_DATA.searchResults(query);
+            if (results.length === 0) {
+                container.innerHTML = `<div class="text-center p-10 bg-white rounded-lg shadow-md">
+                    <h3 class="font-semibold text-lg">找不到結果</h3>
+                    <p class="text-gray-500">請嘗試不同的關鍵字。</p>
+                </div>`;
+                return;
+            }
+
+            results.forEach(group => {
+                group.items.sort((a, b) => appState.currentSort === 'asc' ? a.price - b.price : b.price - a.price);
+            });
+
+            container.innerHTML = results.map(group => `
+                <div class="bg-white p-4 rounded-lg shadow-md border border-[#c4d3d8] hover:shadow-lg transition-shadow">
+                    <h3 class="font-semibold mb-3 text-lg">${group.representative_title}</h3>
+                    <div class="space-y-4">
+                        ${group.items.map(item => `
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-t pt-4 first:border-t-0 first:pt-0">
+                                <img src="${item.img}" alt="${item.name}" class="w-24 h-24 object-cover rounded-md border">
+                                <div class="flex-grow">
+                                    <p class="text-gray-800">${item.name}</p>
+                                    <p class="text-xs text-gray-500 capitalize">${item.platform}</p>
+                                </div>
+                                <div class="flex-shrink-0 text-left sm:text-right">
+                                    <p class="text-xl font-bold text-[#7d9da8]">NT$ ${item.price.toLocaleString()}</p>
+                                    <a href="${item.url}" target="_blank" class="inline-block mt-1 bg-[#cab6b7] text-white px-4 py-1 text-sm rounded-full hover:bg-opacity-80">前往購買</a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            updateTimestamp.textContent = `資料更新於: ${new Date().toLocaleTimeString()}`;
+            precisionDisplay.textContent = '比對精準度: 標準';
+            sortOptions.classList.remove('hidden');
+        }, 1200);
+    }
+
+    function createModal(title, content) {
+        const modalId = `modal-${Date.now()}`;
+        const modalHTML = `
+            <div id="${modalId}" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+                    <div class="flex justify-between items-center p-4 border-b">
+                        <h2 class="text-xl font-semibold">${title}</h2>
+                        <button class="modal-close-btn text-2xl text-gray-500 hover:text-gray-800">&times;</button>
+                    </div>
+                    <div class="p-6 overflow-y-auto">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('modals-container').innerHTML = modalHTML;
+        
+        const modal = document.getElementById(modalId);
+        modal.querySelector('.modal-close-btn').addEventListener('click', () => modal.remove());
+        return modal;
+    }
+
+    function showPlatformSelector() {
+        const platformItems = Object.entries(appState.platforms).map(([id, {name, selected}]) => `
+            <label class="flex items-center space-x-3">
+                <input type="checkbox" data-id="${id}" class="h-5 w-5 rounded border-gray-300 text-[#7d9da8] focus:ring-[#7d9da8]" ${selected ? 'checked' : ''}>
+                <span>${name}</span>
+            </label>
+        `).join('');
+
+        const content = `
+            <div class="space-y-4">${platformItems}</div>
+            <div class="flex justify-end gap-4 mt-6 border-t pt-4">
+                <button id="platform-clear-all" class="text-sm text-gray-600 hover:text-black">全部清除</button>
+                <button id="platform-select-all" class="text-sm text-gray-600 hover:text-black">全選</button>
+            </div>
+        `;
+        const modal = createModal('選擇電商平台', content);
+        
+        modal.addEventListener('change', (e) => {
+            if (e.target.matches('input[type="checkbox"]')) {
+                appState.platforms[e.target.dataset.id].selected = e.target.checked;
+            }
+        });
+
+        modal.querySelector('#platform-select-all').addEventListener('click', () => {
+             modal.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+             Object.keys(appState.platforms).forEach(id => appState.platforms[id].selected = true);
+        });
+         modal.querySelector('#platform-clear-all').addEventListener('click', () => {
+             modal.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+             Object.keys(appState.platforms).forEach(id => appState.platforms[id].selected = false);
+        });
+    }
+
+    function showHelpModal() {
+        const content = `
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold">如何使用？</h3>
+                    <p class="text-gray-600">在搜尋框中輸入您想比價的商品名稱，點擊搜尋即可。您也可以點擊熱門關鍵字快速開始。</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold">什麼是比對精準度？</h3>
+                    <p class="text-gray-600">我們的系統會自動將不同平台上的相似商品分組。精準度越高，代表商品名稱要越相似才會被分在同一組。</p>
+                </div>
+                 <div>
+                    <h3 class="font-semibold">免責聲明</h3>
+                    <p class="text-gray-600">本網站所有價格與庫存資訊均來自各大電商平台，僅供參考。實際價格、庫存及所有交易細節，請以各平台最終結帳頁面為準。</p>
+                </div>
+            </div>
+        `;
+        createModal('使用說明 & FAQ', content);
+    }
+    
+    function renderUserReports() {
+        const container = document.getElementById('report-history');
+        if (appState.userReports.length === 0) {
+            container.innerHTML = `<p class="text-gray-500">尚無回報紀錄。</p>`;
+            return;
+        }
+        container.innerHTML = appState.userReports.map(report => `
+            <div class="bg-gray-100 p-3 rounded-lg">
+                <div class="cursor-pointer" data-report-id="${report.id}">
+                    <div class="flex justify-between items-center">
+                        <p class="font-semibold">${report.subject}</p>
+                        <span class="text-xs px-2 py-1 rounded-full ${report.status === '已回覆' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">${report.status}</span>
+                    </div>
+                    <p class="text-xs text-gray-500">${report.date}</p>
+                </div>
+                <div class="report-details hidden mt-2 pt-2 border-t text-sm space-y-2">
+                    <p><b>您的問題:</b> ${report.content}</p>
+                    ${report.reply ? `<p><b>管理員回覆:</b> ${report.reply}</p>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function renderAdminReports() {
+        const container = document.getElementById('admin-reports-list');
+        const notification = document.getElementById('report-notification');
+
+        const newReports = appState.adminReports.filter(r => r.status === '處理中').length;
+        if (newReports > 0) {
+            notification.classList.remove('hidden');
+        } else {
+            notification.classList.add('hidden');
+        }
+
+        if (appState.adminReports.length === 0) {
+            container.innerHTML = `<p class="text-gray-500">目前沒有待處理的回報。</p>`;
+            return;
+        }
+
+        container.innerHTML = appState.adminReports.map(report => `
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold">${report.subject}</p>
+                        <p class="text-xs text-gray-500">來自: ${report.userId} | ${report.date}</p>
+                    </div>
+                    <span class="text-sm px-2 py-1 rounded-full ${report.status === '已回覆' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">${report.status}</span>
+                </div>
+                <p class="mt-2 p-3 bg-gray-50 rounded">${report.content}</p>
+                ${report.status === '處理中' ? `
+                <form class="admin-reply-form mt-3" data-report-id="${report.id}">
+                    <textarea required placeholder="在此輸入回覆..." rows="2" class="w-full p-2 border rounded-md"></textarea>
+                    <button type="submit" class="mt-2 bg-gray-800 text-white px-4 py-1 rounded-md hover:bg-gray-700">送出回覆</button>
+                </form>
+                ` : `<div class="mt-3 p-3 bg-green-50 rounded text-sm"><p><b>您的回覆:</b> ${report.reply}</p></div>`}
+            </div>
+        `).join('');
+    }
+
+    function initAdminChart() {
+        const ctx = document.getElementById('admin-chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: MOCK_DATA.adminChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    document.querySelector('#app-container').addEventListener('click', (e) => {
+        if (e.target.matches('.trending-tab')) {
+            document.querySelectorAll('.trending-tab').forEach(tab => {
+                tab.classList.remove('text-[#7d9da8]', 'border-b-2', 'border-[#7d9da8]', 'font-semibold');
+                tab.classList.add('text-gray-500');
+            });
+            e.target.classList.add('text-[#7d9da8]', 'border-b-2', 'border-[#7d9da8]', 'font-semibold');
+            appState.currentTrendingTab = e.target.dataset.tab;
+            renderTrending();
+        }
+
+        if (e.target.matches('.keyword-tag')) {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = e.target.textContent;
+            renderResults(searchInput.value);
+        }
+        
+        if (e.target.matches('.sort-btn')) {
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('text-[#7d9da8]', 'font-bold');
+                btn.classList.add('text-gray-500');
+            });
+            e.target.classList.add('text-[#7d9da8]', 'font-bold');
+            appState.currentSort = e.target.dataset.sort;
+            renderResults(document.getElementById('search-input').value);
+        }
+
+        if (e.target.closest('[data-report-id]')) {
+             const details = e.target.closest('[data-report-id]').nextElementSibling;
+             if (details && details.classList.contains('report-details')) {
+                details.classList.toggle('hidden');
+             }
+        }
+        
+        if (e.target.matches('.admin-tab')) {
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.classList.remove('text-[#7d9da8]', 'border-b-2', 'border-[#7d9da8]', 'font-semibold');
+                tab.classList.add('text-gray-500');
+            });
+            e.target.classList.add('text-[#7d9da8]', 'border-b-2', 'border-[#7d9da8]', 'font-semibold');
+            const targetTab = e.target.dataset.adminTab;
+            document.getElementById('admin-stats-content').classList.toggle('hidden', targetTab !== 'stats');
+            document.getElementById('admin-reports-content').classList.toggle('hidden', targetTab !== 'reports');
+        }
+    });
+
+    document.getElementById('search-btn').addEventListener('click', () => {
+        renderResults(document.getElementById('search-input').value);
+    });
+    
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') {
+            renderResults(e.target.value);
+        }
+        if (e.target.value === 'admin_access') {
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+            document.getElementById('admin-login-modal').classList.add('flex');
+            e.target.value = '';
+        }
+    });
+    
+    document.getElementById('platform-select-btn').addEventListener('click', showPlatformSelector);
+    document.getElementById('help-btn').addEventListener('click', showHelpModal);
+    document.getElementById('disclaimer-btn').addEventListener('click', (e) => { e.preventDefault(); showHelpModal(); });
+    
+    document.getElementById('user-account-btn').addEventListener('click', () => switchView('user'));
+    document.getElementById('back-to-main-btn').addEventListener('click', () => switchView('main'));
+    document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        appState.adminLoggedIn = false;
+        switchView('main');
+    });
+
+    document.getElementById('report-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const subject = document.getElementById('report-subject').value;
+        const content = document.getElementById('report-content').value;
+        const newReport = {
+            id: Date.now(),
+            subject,
+            content,
+            date: new Date().toLocaleString(),
+            status: '處理中',
+            reply: null,
+            userId: 'user-12345'
+        };
+        appState.userReports.unshift(newReport);
+        appState.adminReports.unshift(newReport); 
+        renderUserReports();
+        renderAdminReports();
+        e.target.reset();
+        alert('您的問題已提交，感謝您的回報！');
+    });
+    
+    document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (document.getElementById('admin-secret-key').value === '1234') {
+            appState.adminLoggedIn = true;
+            document.getElementById('admin-login-modal').classList.add('hidden');
+            switchView('admin');
+        } else {
+            alert('密鑰錯誤！');
+        }
+    });
+    document.getElementById('admin-login-close').addEventListener('click', () => {
+         document.getElementById('admin-login-modal').classList.add('hidden');
+    });
+
+    document.getElementById('admin-reports-content').addEventListener('submit', (e) => {
+        if (e.target.matches('.admin-reply-form')) {
+            e.preventDefault();
+            const reportId = parseInt(e.target.dataset.reportId);
+            const replyText = e.target.querySelector('textarea').value;
+            
+            const adminReport = appState.adminReports.find(r => r.id === reportId);
+            if (adminReport) {
+                adminReport.status = '已回覆';
+                adminReport.reply = replyText;
+            }
+            
+            const userReport = appState.userReports.find(r => r.id === reportId);
+            if(userReport) {
+                userReport.status = '已回覆';
+                userReport.reply = replyText;
+            }
+
+            renderAdminReports();
+            renderUserReports();
+        }
+    });
+
+    initStatsBar();
+    renderTrending();
+    initAdminChart();
+    renderUserReports();
+    renderAdminReports(); 
+});
+</script>
+</body>
+</html>
