@@ -1,0 +1,110 @@
+{
+  "test_01": {
+    "filename": "clear_chinese_problem.jpg",
+    "expected_blocks": 4,
+    "expected_confidence": 0.81,
+    "expected_processing_time": 3.1,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 1: clear_chinese_problem.jpg"
+  },
+  "test_02": {
+    "filename": "dark_chinese_problem.jpg",
+    "expected_blocks": 5,
+    "expected_confidence": 0.8200000000000001,
+    "expected_processing_time": 3.2,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 2: dark_chinese_problem.jpg"
+  },
+  "test_03": {
+    "filename": "multiline_options.jpg",
+    "expected_blocks": 3,
+    "expected_confidence": 0.8300000000000001,
+    "expected_processing_time": 3.3,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 3: multiline_options.jpg"
+  },
+  "test_04": {
+    "filename": "multiple_formulas.jpg",
+    "expected_blocks": 4,
+    "expected_confidence": 0.8400000000000001,
+    "expected_processing_time": 3.4,
+    "contains_formulas": true,
+    "contains_images": false,
+    "description": "測試案例 4: multiple_formulas.jpg"
+  },
+  "test_05": {
+    "filename": "handwritten_formula.jpg",
+    "expected_blocks": 5,
+    "expected_confidence": 0.8500000000000001,
+    "expected_processing_time": 3.5,
+    "contains_formulas": true,
+    "contains_images": false,
+    "description": "測試案例 5: handwritten_formula.jpg"
+  },
+  "test_06": {
+    "filename": "skewed_image.jpg",
+    "expected_blocks": 3,
+    "expected_confidence": 0.8600000000000001,
+    "expected_processing_time": 3.6,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 6: skewed_image.jpg"
+  },
+  "test_07": {
+    "filename": "two_problems.jpg",
+    "expected_blocks": 4,
+    "expected_confidence": 0.8700000000000001,
+    "expected_processing_time": 3.7,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 7: two_problems.jpg"
+  },
+  "test_08": {
+    "filename": "compressed_image.jpg",
+    "expected_blocks": 5,
+    "expected_confidence": 0.88,
+    "expected_processing_time": 3.8,
+    "contains_formulas": false,
+    "contains_images": false,
+    "description": "測試案例 8: compressed_image.jpg"
+  },
+  "test_09": {
+    "filename": "formula_with_typos.jpg",
+    "expected_blocks": 3,
+    "expected_confidence": 0.89,
+    "expected_processing_time": 3.9,
+    "contains_formulas": true,
+    "contains_images": false,
+    "description": "測試案例 9: formula_with_typos.jpg"
+  },
+  "test_10": {
+    "filename": "complex_formula.jpg",
+    "expected_blocks": 4,
+    "expected_confidence": 0.9,
+    "expected_processing_time": 3.0,
+    "contains_formulas": true,
+    "contains_images": false,
+    "description": "測試案例 10: complex_formula.jpg"
+  },
+  "test_11": {
+    "filename": "problem_with_images.jpg",
+    "expected_blocks": 5,
+    "expected_confidence": 0.91,
+    "expected_processing_time": 3.1,
+    "contains_formulas": true,
+    "contains_images": true,
+    "description": "測試案例 11: problem_with_images.jpg"
+  },
+  "test_12": {
+    "filename": "long_problem_two_images.jpg",
+    "expected_blocks": 3,
+    "expected_confidence": 0.92,
+    "expected_processing_time": 3.2,
+    "contains_formulas": true,
+    "contains_images": true,
+    "description": "測試案例 12: long_problem_two_images.jpg"
+  }
+}
