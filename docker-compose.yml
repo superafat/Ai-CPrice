@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # 後端 API 服務
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MATHPIX_APP_ID=${MATHPIX_APP_ID}
+      - MATHPIX_APP_KEY=${MATHPIX_APP_KEY}
+      - DEBUG=false
+    volumes:
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # 前端服務
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    restart: unless-stopped
+
+  # Redis 快取服務
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # Celery 工作者（任務佇列）
+  celery_worker:
+    build: ./backend
+    command: celery -A app.services.queue.celery_app worker --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MATHPIX_APP_ID=${MATHPIX_APP_ID}
+      - MATHPIX_APP_KEY=${MATHPIX_APP_KEY}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Celery 監控（可選）
+  celery_flower:
+    build: ./backend
+    command: celery -A app.services.queue.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  default:
+    name: ocr_network

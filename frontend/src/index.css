@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自訂樣式 */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+@layer components {
+  /* 按鈕樣式 */
+  .btn-primary {
+    @apply px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors;
+  }
+  
+  /* 表單樣式 */
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+  
+  /* 卡片樣式 */
+  .card {
+    @apply bg-white rounded-lg shadow-sm border;
+  }
+  
+  /* 數學公式容器 */
+  .math-container {
+    @apply my-2;
+  }
+  
+  .math-inline {
+    @apply mx-1;
+  }
+}
+
+/* KaTeX 樣式調整 */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1em 0;
+}
+
+/* 行動裝置優化 */
+@media (max-width: 640px) {
+  .katex {
+    font-size: 1em;
+  }
+  
+  .katex-display {
+    margin: 0.8em 0;
+    overflow-x: auto;
+  }
+}
+
+/* 上傳拖拽區域 */
+.upload-dropzone {
+  transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover {
+  @apply border-primary-400 bg-primary-25;
+}
+
+.upload-dropzone.drag-active {
+  @apply border-primary-500 bg-primary-50;
+}
+
+/* 載入動畫 */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 滾動條樣式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 高對比度支援 */
+@media (prefers-contrast: high) {
+  .card {
+    @apply border-2 border-gray-400;
+  }
+}
+
+/* 減少動畫支援 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 深色模式準備 */
+@media (prefers-color-scheme: dark) {
+  /* 暫時不實作深色模式 */
+}
